@@ -4,90 +4,142 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Best Record Pool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --turf:#1B3A2B;
-    --turf-dark:#122419;
-    --turf-line:#3F5D4A;
-    --chalk:#F3F1E7;
-    --chalk-dim:#BFC9BE;
-    --gold:#D4A73A;
-    --flag:#B8443A;
+    --bg:#0A0D13;
+    --panel:#131822;
+    --panel-2:#171D29;
+    --border:#242B39;
+    --text:#EEF1F6;
+    --text-dim:#8991A3;
+    --text-faint:#5C6478;
+    --accent:#FFB238;
+    --accent-soft:rgba(255,178,56,0.12);
+    --live:#FF5D5D;
+    --neg:#3A4256;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 40px, transparent 40px, transparent 80px),
-      var(--turf);
-    color:var(--chalk);
-    font-family: Inter, -apple-system, "Segoe UI", Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,"Segoe UI",Arial,sans-serif;
     min-height:100vh;
-    padding:28px 16px 48px;
+    padding:32px 18px 56px;
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:720px;margin:0 auto;}
-  .masthead{
-    display:flex;justify-content:space-between;align-items:flex-end;
-    border-bottom:2px solid var(--turf-line);
-    padding-bottom:14px;margin-bottom:22px;gap:12px;flex-wrap:wrap;
+  .wrap{max-width:760px;margin:0 auto;}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;gap:12px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand h1{
+    font-family:'Sora',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.2px;
+    margin:0;color:var(--text);
   }
-  .masthead h1{
-    font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;
-    font-size:30px;letter-spacing:0.5px;margin:0;line-height:1.05;
+  .live-pill{
+    display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--border);
+    border-radius:20px;padding:4px 10px 4px 8px;font-size:11px;font-weight:700;letter-spacing:0.4px;color:var(--text-dim);
   }
-  .masthead p{margin:4px 0 0;color:var(--chalk-dim);font-size:13px;}
-  .status{text-align:right;font-size:12px;color:var(--chalk-dim);}
-  .status .updated{margin-bottom:6px;}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--live);animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,93,93,0.5);}50%{opacity:0.55;box-shadow:0 0 0 4px rgba(255,93,93,0);}}
+  @media (prefers-reduced-motion: reduce){.live-dot{animation:none;}}
+
+  .status{text-align:right;}
+  .status .updated{font-size:11px;color:var(--text-faint);margin-bottom:6px;}
   button.refresh{
-    background:var(--gold);color:var(--turf-dark);border:none;font-weight:700;
-    font-size:13px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:inherit;
+    background:var(--accent);color:#1A1305;border:none;font-weight:700;
+    font-size:13px;padding:9px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;
+    transition:filter 0.15s ease;
   }
-  button.refresh:disabled{opacity:0.6;cursor:default;}
+  button.refresh:disabled{opacity:0.5;cursor:default;}
   button.refresh:hover:not(:disabled){filter:brightness(1.08);}
+
   .hero{
-    background:var(--turf-dark);border:1px solid var(--turf-line);border-left:5px solid var(--gold);
-    padding:20px 22px;margin-bottom:26px;display:flex;align-items:center;justify-content:space-between;
-    flex-wrap:wrap;gap:14px;
+    background:linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
+    border:1px solid var(--border);border-radius:16px;
+    padding:24px 26px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:18px;position:relative;overflow:hidden;
   }
-  .hero .label{font-size:12px;color:var(--chalk-dim);margin-bottom:6px;}
-  .hero .leader-name{font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;font-size:26px;}
-  .hero .margin{font-size:12px;color:var(--chalk-dim);margin-top:4px;}
-  .hero .num{font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;font-size:56px;color:var(--gold);line-height:1;text-align:right;}
-  .hero .num small{display:block;font-size:12px;font-weight:600;color:var(--chalk-dim);margin-top:2px;}
-  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  table.board{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
-  table.board thead th{
-    text-align:left;font-weight:700;font-size:11px;color:var(--chalk-dim);
-    padding:0 6px 8px;border-bottom:2px solid var(--turf-line);white-space:nowrap;
+  .hero::before{
+    content:'';position:absolute;top:0;left:0;bottom:0;width:4px;
+    background:linear-gradient(180deg, var(--accent), transparent);
   }
-  table.board th.num, table.board td.num{text-align:right;}
-  table.board tbody td{padding:10px 6px;border-bottom:1px solid var(--turf-line);vertical-align:middle;}
-  table.board tbody tr.lead td{background:rgba(212,167,58,0.06);}
-  table.board tbody tr.tiegroup-top td{border-top:1px dashed var(--gold);}
-  .rank{font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;font-size:18px;color:var(--chalk-dim);width:22px;}
-  tr.lead .rank{color:var(--gold);}
-  .name{font-weight:700;white-space:nowrap;}
-  .teams{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
-  .badge{
-    display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);
-    border:1px solid var(--turf-line);border-radius:3px;padding:3px 7px 3px 3px;
-    font-size:11.5px;white-space:nowrap;margin:2px 3px 2px 0;
+  .hero-left{display:flex;align-items:center;gap:16px;}
+  .avatar{
+    width:52px;height:52px;border-radius:50%;background:var(--accent-soft);border:1px solid rgba(255,178,56,0.35);
+    display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;
+    font-size:18px;color:var(--accent);flex:0 0 52px;
   }
-  .swatch{width:9px;height:9px;border-radius:50%;flex:0 0 9px;}
-  .badge .rec{color:var(--chalk-dim);}
-  .badge .contrib{color:var(--gold);font-weight:700;}
-  .wins{font-weight:800;font-size:17px;font-family:"Arial Narrow",Arial,sans-serif;}
-  .pf{font-size:11px;color:var(--chalk-dim);}
-  .empty{text-align:center;padding:40px 20px;border:1px dashed var(--turf-line);color:var(--chalk-dim);}
-  .empty button.refresh{margin-top:14px;}
-  details.rules{margin-top:30px;border-top:2px solid var(--turf-line);padding-top:14px;font-size:13px;color:var(--chalk-dim);}
-  details.rules summary{cursor:pointer;color:var(--chalk);font-weight:700;font-size:13px;}
-  details.rules ol{margin:10px 0 0;padding-left:18px;line-height:1.6;}
-  .footnote{margin-top:10px;font-size:11px;color:var(--chalk-dim);}
+  .hero .label{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-faint);font-weight:700;margin-bottom:4px;}
+  .hero .leader-name{font-family:'Sora',sans-serif;font-weight:700;font-size:24px;color:var(--text);}
+  .hero .margin{font-size:12.5px;color:var(--text-dim);margin-top:3px;}
+  .hero .num{font-family:'Sora',sans-serif;font-weight:800;font-size:44px;color:var(--accent);line-height:1;text-align:right;}
+  .hero .num small{display:block;font-size:11px;font-weight:600;color:var(--text-faint);margin-top:4px;text-transform:uppercase;letter-spacing:0.4px;}
+
+  .listhead{
+    display:grid;grid-template-columns:32px 1fr 130px;gap:10px;padding:0 14px 8px;
+    font-size:10.5px;font-weight:700;letter-spacing:0.5px;color:var(--text-faint);text-transform:uppercase;
+  }
+  .listhead .num{text-align:right;}
+
+  .row{
+    display:grid;grid-template-columns:32px 1fr 130px;gap:10px;align-items:center;
+    padding:13px 14px;border-bottom:1px solid var(--border);
+  }
+  .numrow{display:flex;justify-content:flex-end;gap:22px;}
+  .numrow .num-cell{width:56px;text-align:right;}
+  .row.lead{background:var(--panel);border-radius:10px;border-bottom:1px solid var(--border);}
+  .row.tie-top{box-shadow:inset 0 1px 0 0 rgba(255,178,56,0.4);}
+  .rankbadge{
+    width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;color:var(--text-dim);background:var(--panel-2);
+    border:1px solid var(--border);
+  }
+  .row.lead .rankbadge{background:var(--accent);color:#1A1305;border-color:var(--accent);}
+  .playername{font-weight:700;font-size:14.5px;color:var(--text);}
+  .teams{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;background:var(--panel-2);
+    border:1px solid var(--border);border-radius:14px;padding:3px 8px 3px 4px;
+    font-size:11px;white-space:nowrap;font-weight:600;color:var(--text-dim);
+  }
+  .swatch{width:8px;height:8px;border-radius:50%;flex:0 0 8px;}
+  .chip .rec{color:var(--text-faint);font-weight:500;}
+  .chip .contrib{color:var(--accent);font-weight:700;}
+  .num-cell{text-align:right;}
+  .wins{font-weight:800;font-size:16px;font-family:'Sora',sans-serif;color:var(--text);}
+  .pf{font-size:11px;color:var(--text-faint);margin-top:2px;}
+
+  .empty{text-align:center;padding:48px 20px;border:1px dashed var(--border);border-radius:14px;color:var(--text-dim);}
+  .empty button.refresh{margin-top:16px;}
+
+  details.rules{margin-top:34px;border-top:1px solid var(--border);padding-top:16px;font-size:13px;color:var(--text-dim);}
+  details.rules summary{cursor:pointer;color:var(--text);font-weight:700;font-size:13px;list-style:none;}
+  details.rules summary::-webkit-details-marker{display:none;}
+  details.rules summary::before{content:'▸ ';color:var(--accent);}
+  details.rules[open] summary::before{content:'▾ ';}
+  details.rules ol{margin:12px 0 0;padding-left:18px;line-height:1.7;}
+
+  .footnote{margin-top:12px;font-size:11px;color:var(--text-faint);}
   .toast{
-    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--flag);color:var(--chalk);
-    padding:9px 16px;border-radius:4px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,0.4);
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#2A1414;color:#FFD3D3;
+    border:1px solid #4A2020;padding:10px 18px;border-radius:8px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.4);
     max-width:90%;text-align:center;
+  }
+
+  .mlabel{display:none;}
+  @media (max-width:520px){
+    .listhead{display:none;}
+    .row{grid-template-columns:28px 1fr;row-gap:8px;}
+    .numrow{
+      grid-column:2;justify-content:flex-start;gap:20px;
+      border-top:1px solid var(--border);padding-top:8px;margin-top:1px;
+    }
+    .numrow .num-cell{width:auto;text-align:left;}
+    .mlabel{display:inline;font-size:10.5px;color:var(--text-faint);font-weight:600;text-transform:uppercase;}
   }
 </style>
 </head>
@@ -166,13 +218,19 @@
     return rows;
   }
 
+  function initials(name){
+    return name.slice(0,2).toUpperCase();
+  }
+
   function render(){
     var root = document.getElementById('root');
     var rows = computeRanking();
     var haveAny = Object.keys(state.standings).length > 0;
     var html = '';
     html += '<div class="wrap">';
-    html += '<div class="masthead"><div><h1>Best Record Pool</h1><p>12 players · 3 teams each · win totals decide it</p></div>';
+
+    html += '<div class="topbar"><div class="brand"><h1>Best Record Pool</h1>';
+    html += '<span class="live-pill"><span class="live-dot"></span>LIVE</span></div>';
     html += '<div class="status"><div class="updated">' + (state.loading ? 'Loading…' : 'Updated ' + fmtTime(state.updatedAt)) + '</div>';
     html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
 
@@ -185,26 +243,32 @@
     } else if(haveAny){
       var leader = rows[0], second = rows[1];
       var margin = (leader && second && leader.wins!=null && second.wins!=null) ? (leader.wins - second.wins) : null;
-      html += '<div class="hero"><div><div class="label">Currently leading</div>';
+      html += '<div class="hero"><div class="hero-left"><div class="avatar">' + (leader ? initials(leader.name) : '—') + '</div><div>';
+      html += '<div class="label">Currently leading</div>';
       html += '<div class="leader-name">' + (leader ? leader.name : '—') + '</div>';
-      html += '<div class="margin">' + (margin!=null ? (margin===0 ? 'Tied with ' + second.name : 'Leads ' + second.name + ' by ' + margin) : '') + '</div></div>';
-      html += '<div class="num">' + (leader && leader.wins!=null ? leader.wins : '—') + '<small>combined wins</small></div></div>';
+      html += '<div class="margin">' + (margin!=null ? (margin===0 ? 'Tied with ' + second.name : 'Leads ' + second.name + ' by ' + margin) : '') + '</div></div></div>';
+      html += '<div class="num">' + (leader && leader.wins!=null ? leader.wins : '—') + '<small>Combined wins</small></div></div>';
 
-      html += '<div class="tablewrap"><table class="board"><thead><tr><th>#</th><th>Player</th><th>Teams &amp; live record</th><th class="num">Wins</th><th class="num">Points</th></tr></thead><tbody>';
+      html += '<div class="listhead"><div>#</div><div>Player &amp; teams</div><div class="num">Wins</div><div class="num">Pts</div></div>';
       rows.forEach(function(r, i){
         var isTieTop = i>0 && rows[i-1].wins!=null && r.wins!=null && rows[i-1].wins===r.wins;
-        html += '<tr class="' + (i===0 && r.wins!=null?'lead ':'') + (isTieTop?'tiegroup-top':'') + '">';
-        html += '<td class="rank">' + (i+1) + '</td><td class="name">' + r.name + '</td><td><div class="teams">';
+        html += '<div class="row' + (i===0 && r.wins!=null?' lead':'') + (isTieTop?' tie-top':'') + '">';
+        html += '<div class="rankbadge">' + (i+1) + '</div>';
+        html += '<div><div class="playername">' + r.name + '</div><div class="teams">';
         r.teams.forEach(function(abbr){
           var t = TEAM_META[abbr];
           var rec = state.standings[abbr];
           var recTxt = rec ? (rec.w + '-' + rec.l + (rec.t? '-' + rec.t : '')) : '—';
           var contribTxt = rec ? winScore(rec) : null;
-          html += '<span class="badge"><span class="swatch" style="background:' + t.color + '"></span>' + abbr + ' <span class="rec">' + recTxt + '</span>' + (contribTxt!=null ? ' <span class="contrib">' + contribTxt + '</span>' : '') + '</span>';
+          html += '<span class="chip"><span class="swatch" style="background:' + t.color + '"></span>' + abbr + ' <span class="rec">' + recTxt + '</span>' + (contribTxt!=null ? ' <span class="contrib">' + contribTxt + '</span>' : '') + '</span>';
         });
-        html += '</div></td><td class="num wins">' + (r.wins!=null ? r.wins : '—') + '</td><td class="num pf">' + (r.pf!=null ? r.pf : '—') + '</td></tr>';
+        html += '</div></div>';
+        html += '<div class="numrow">';
+        html += '<div class="num-cell"><span class="mlabel">W&nbsp;</span><span class="wins">' + (r.wins!=null ? r.wins : '—') + '</span></div>';
+        html += '<div class="num-cell"><span class="mlabel">PTS&nbsp;</span><span class="pf">' + (r.pf!=null ? r.pf : '—') + '</span></div>';
+        html += '</div>';
+        html += '</div>';
       });
-      html += '</tbody></table></div>';
       if(state.errors && state.errors.length){
         html += '<div class="footnote">Couldn\'t reach ESPN for: ' + state.errors.join(', ') + '. Try refreshing again shortly.</div>';
       }
