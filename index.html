@@ -88,7 +88,8 @@
     display:grid;grid-template-columns:32px 1fr 130px;gap:10px;padding:0 14px 8px;
     font-size:10.5px;font-weight:700;letter-spacing:0.5px;color:var(--text-faint);text-transform:uppercase;
   }
-  .listhead .num{text-align:right;}
+  .listhead .numrow-head{display:flex;justify-content:flex-end;gap:22px;}
+  .listhead .numrow-head span{width:56px;text-align:right;}
 
   .row{
     display:grid;grid-template-columns:32px 1fr 130px;gap:10px;align-items:center;
@@ -263,13 +264,17 @@
     var perWeek = {};
     weeks.forEach(function(w){
       perWeek[w] = DRAFT.map(function(entry){
-        var pts = 0, wins = 0, played = 0;
+        var pts = 0, wins = 0, ties = 0, played = 0;
         entry.teams.forEach(function(abbr){
           var games = state.teamGames[abbr] || [];
           var g = games.filter(function(x){ return x.week === w; })[0];
-          if(g){ pts += g.pf; played++; if(g.result === 'W') wins++; }
+          if(g){
+            pts += g.pf; played++;
+            if(g.result === 'W') wins++;
+            else if(g.result === 'T') ties++;
+          }
         });
-        return { name: entry.name, pts: pts, wins: wins, played: played };
+        return { name: entry.name, pts: pts, wins: wins, ties: ties, winScore: wins + 0.5*ties, played: played };
       });
     });
     return { weeks: weeks, perWeek: perWeek };
@@ -379,7 +384,7 @@
       html += '<div class="margin">' + (margin!=null ? (margin===0 ? 'Tied with ' + second.name : 'Leads ' + second.name + ' by ' + margin) : '') + '</div></div></div>';
       html += '<div class="num">' + (leader && leader.wins!=null ? leader.wins : '—') + '<small>Combined wins</small></div></div>';
 
-      html += '<div class="listhead"><div>#</div><div>Player &amp; teams</div><div class="num">Wins</div><div class="num">Pts</div></div>';
+      html += '<div class="listhead"><div>#</div><div>Player &amp; teams</div><div class="numrow-head"><span>Wins</span><span>Pts</span></div></div>';
       rows.forEach(function(r, i){
         var isTieTop = i>0 && rows[i-1].wins!=null && r.wins!=null && rows[i-1].wins===r.wins;
         html += '<div class="row' + (i===0 && r.wins!=null?' lead':'') + (isTieTop?' tie-top':'') + '">';
@@ -422,8 +427,8 @@
         html += '</div></div>';
       }
 
-      // ---- Points by week table ----
-      html += '<div class="section-title">Points by week</div>';
+      // ---- Wins by week table ----
+      html += '<div class="section-title">Wins by week</div>';
       if(!weekly.weeks.length){
         html += '<div class="section-sub">Will fill in once games start finishing.</div>';
       } else {
@@ -433,12 +438,12 @@
         weekly.weeks.forEach(function(w){
           html += '<tr><td class="wk">Wk ' + w + '</td>';
           weekly.perWeek[w].forEach(function(r){
-            html += '<td>' + (r.played>0 ? r.pts : '—') + '</td>';
+            html += '<td>' + (r.played>0 ? r.winScore : '—') + '</td>';
           });
           html += '</tr>';
         });
         html += '</tbody></table></div>';
-        html += '<div class="footnote">A team on bye that week counts as 0 points toward that week\'s total.</div>';
+        html += '<div class="footnote">Out of 3 possible wins each week per player · a team on bye counts as 0 that week.</div>';
       }
     }
 
