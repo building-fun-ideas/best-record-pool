@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Best Record Pool</title>
+<style>
+  :root{
+    --turf:#1B3A2B;
+    --turf-dark:#122419;
+    --turf-line:#3F5D4A;
+    --chalk:#F3F1E7;
+    --chalk-dim:#BFC9BE;
+    --gold:#D4A73A;
+    --flag:#B8443A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 40px, transparent 40px, transparent 80px),
+      var(--turf);
+    color:var(--chalk);
+    font-family: Inter, -apple-system, "Segoe UI", Arial, sans-serif;
+    min-height:100vh;
+    padding:28px 16px 48px;
+  }
+  .wrap{max-width:720px;margin:0 auto;}
+  .masthead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--turf-line);
+    padding-bottom:14px;margin-bottom:22px;gap:12px;flex-wrap:wrap;
+  }
+  .masthead h1{
+    font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;
+    font-size:30px;letter-spacing:0.5px;margin:0;line-height:1.05;
+  }
+  .masthead p{margin:4px 0 0;color:var(--chalk-dim);font-size:13px;}
+  .status{text-align:right;font-size:12px;color:var(--chalk-dim);}
+  .status .updated{margin-bottom:6px;}
+  button.refresh{
+    background:var(--gold);color:var(--turf-dark);border:none;font-weight:700;
+    font-size:13px;padding:8px 14px;border-radius:3px;cursor:pointer;font-family:inherit;
+  }
+  button.refresh:disabled{opacity:0.6;cursor:default;}
+  button.refresh:hover:not(:disabled){filter:brightness(1.08);}
+  .hero{
+    background:var(--turf-dark);border:1px solid var(--turf-line);border-left:5px solid var(--gold);
+    padding:20px 22px;margin-bottom:26px;display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:14px;
+  }
+  .hero .label{font-size:12px;color:var(--chalk-dim);margin-bottom:6px;}
+  .hero .leader-name{font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;font-size:26px;}
+  .hero .margin{font-size:12px;color:var(--chalk-dim);margin-top:4px;}
+  .hero .num{font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;font-size:56px;color:var(--gold);line-height:1;text-align:right;}
+  .hero .num small{display:block;font-size:12px;font-weight:600;color:var(--chalk-dim);margin-top:2px;}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table.board{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
+  table.board thead th{
+    text-align:left;font-weight:700;font-size:11px;color:var(--chalk-dim);
+    padding:0 6px 8px;border-bottom:2px solid var(--turf-line);white-space:nowrap;
+  }
+  table.board th.num, table.board td.num{text-align:right;}
+  table.board tbody td{padding:10px 6px;border-bottom:1px solid var(--turf-line);vertical-align:middle;}
+  table.board tbody tr.lead td{background:rgba(212,167,58,0.06);}
+  table.board tbody tr.tiegroup-top td{border-top:1px dashed var(--gold);}
+  .rank{font-family:"Arial Narrow",Arial,sans-serif;font-weight:800;font-size:18px;color:var(--chalk-dim);width:22px;}
+  tr.lead .rank{color:var(--gold);}
+  .name{font-weight:700;white-space:nowrap;}
+  .teams{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+  .badge{
+    display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);
+    border:1px solid var(--turf-line);border-radius:3px;padding:3px 7px 3px 3px;
+    font-size:11.5px;white-space:nowrap;margin:2px 3px 2px 0;
+  }
+  .swatch{width:9px;height:9px;border-radius:50%;flex:0 0 9px;}
+  .badge .rec{color:var(--chalk-dim);}
+  .badge .contrib{color:var(--gold);font-weight:700;}
+  .wins{font-weight:800;font-size:17px;font-family:"Arial Narrow",Arial,sans-serif;}
+  .pf{font-size:11px;color:var(--chalk-dim);}
+  .empty{text-align:center;padding:40px 20px;border:1px dashed var(--turf-line);color:var(--chalk-dim);}
+  .empty button.refresh{margin-top:14px;}
+  details.rules{margin-top:30px;border-top:2px solid var(--turf-line);padding-top:14px;font-size:13px;color:var(--chalk-dim);}
+  details.rules summary{cursor:pointer;color:var(--chalk);font-weight:700;font-size:13px;}
+  details.rules ol{margin:10px 0 0;padding-left:18px;line-height:1.6;}
+  .footnote{margin-top:10px;font-size:11px;color:var(--chalk-dim);}
+  .toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--flag);color:var(--chalk);
+    padding:9px 16px;border-radius:4px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,0.4);
+    max-width:90%;text-align:center;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+(function(){
+
+  var TEAM_META = {
+    BAL:{full:'Baltimore Ravens', color:'#241773'},  NYG:{full:'New York Giants', color:'#0B2265'},
+    CAR:{full:'Carolina Panthers', color:'#0085CA'}, LAR:{full:'Los Angeles Rams', color:'#003594'},
+    NO:{full:'New Orleans Saints', color:'#D3BC8D'}, TEN:{full:'Tennessee Titans', color:'#4B92DB'},
+    BUF:{full:'Buffalo Bills', color:'#00338D'},     WSH:{full:'Washington Commanders', color:'#5A1414'},
+    IND:{full:'Indianapolis Colts', color:'#002C5F'},SEA:{full:'Seattle Seahawks', color:'#69BE28'},
+    DET:{full:'Detroit Lions', color:'#0076B6'},     PIT:{full:'Pittsburgh Steelers', color:'#FFB612'},
+    ATL:{full:'Atlanta Falcons', color:'#A71930'},   PHI:{full:'Philadelphia Eagles', color:'#004C54'},
+    MIN:{full:'Minnesota Vikings', color:'#4F2683'}, DEN:{full:'Denver Broncos', color:'#FB4F14'},
+    TB:{full:'Tampa Bay Buccaneers', color:'#D50A0A'},NE:{full:'New England Patriots', color:'#002244'},
+    JAX:{full:'Jacksonville Jaguars', color:'#006778'},SF:{full:'San Francisco 49ers', color:'#AA0000'},
+    GB:{full:'Green Bay Packers', color:'#203731'},  CIN:{full:'Cincinnati Bengals', color:'#FB4F14'},
+    CHI:{full:'Chicago Bears', color:'#0B162A'},     KC:{full:'Kansas City Chiefs', color:'#E31837'},
+    DAL:{full:'Dallas Cowboys', color:'#869397'},    LAC:{full:'Los Angeles Chargers', color:'#0080C6'},
+    HOU:{full:'Houston Texans', color:'#03202F'}
+  };
+
+  var DRAFT = [
+    {name:'Jon',      teams:['BAL','NYG','CAR']},
+    {name:'Nathalie', teams:['LAR','NO','TEN']},
+    {name:'Roger',    teams:['BUF','WSH','CAR']},
+    {name:'Pam',      teams:['SEA','IND','CAR']},
+    {name:'Tim',      teams:['DET','PIT','ATL']},
+    {name:'Phil',     teams:['PHI','MIN','ATL']},
+    {name:'Jason',    teams:['DEN','TB','CAR']},
+    {name:'Brian',    teams:['NE','JAX','CAR']},
+    {name:'Matthew',  teams:['SF','GB','CAR']},
+    {name:'Will',     teams:['CIN','CHI','ATL']},
+    {name:'Fred',     teams:['KC','DAL','CAR']},
+    {name:'Dana',     teams:['LAC','HOU','CAR']}
+  ];
+
+  var state = { standings: {}, updatedAt: null, loading: true, errors: [] };
+
+  function fmtTime(iso){
+    if(!iso) return 'Never';
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' +
+      d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  }
+
+  function winScore(rec){ if(!rec) return null; return rec.w + 0.5 * (rec.t || 0); }
+
+  function computeRanking(){
+    var rows = DRAFT.map(function(entry){
+      var recs = entry.teams.map(function(a){ return state.standings[a] || null; });
+      var hasAll = recs.every(function(r){ return r; });
+      var wins = hasAll ? recs.reduce(function(s,r){ return s + winScore(r); },0) : null;
+      var pf = hasAll ? recs.reduce(function(s,r){ return s + (r.pf||0); },0) : null;
+      return { name: entry.name, teams: entry.teams, wins: wins, pf: pf };
+    });
+    rows.sort(function(a,b){
+      if(a.wins==null && b.wins==null) return 0;
+      if(a.wins==null) return 1;
+      if(b.wins==null) return -1;
+      if(b.wins !== a.wins) return b.wins - a.wins;
+      return (b.pf||0) - (a.pf||0);
+    });
+    return rows;
+  }
+
+  function render(){
+    var root = document.getElementById('root');
+    var rows = computeRanking();
+    var haveAny = Object.keys(state.standings).length > 0;
+    var html = '';
+    html += '<div class="wrap">';
+    html += '<div class="masthead"><div><h1>Best Record Pool</h1><p>12 players · 3 teams each · win totals decide it</p></div>';
+    html += '<div class="status"><div class="updated">' + (state.loading ? 'Loading…' : 'Updated ' + fmtTime(state.updatedAt)) + '</div>';
+    html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
+
+    if(!haveAny && !state.loading){
+      html += '<div class="empty">Could not load standings.<br><button class="refresh" id="refreshBtnEmpty">Try again</button></div>';
+    } else if(haveAny){
+      var leader = rows[0], second = rows[1];
+      var margin = (leader && second && leader.wins!=null && second.wins!=null) ? (leader.wins - second.wins) : null;
+      html += '<div class="hero"><div><div class="label">Currently leading</div>';
+      html += '<div class="leader-name">' + (leader ? leader.name : '—') + '</div>';
+      html += '<div class="margin">' + (margin!=null ? (margin===0 ? 'Tied with ' + second.name : 'Leads ' + second.name + ' by ' + margin) : '') + '</div></div>';
+      html += '<div class="num">' + (leader && leader.wins!=null ? leader.wins : '—') + '<small>combined wins</small></div></div>';
+
+      html += '<div class="tablewrap"><table class="board"><thead><tr><th>#</th><th>Player</th><th>Teams &amp; live record</th><th class="num">Wins</th><th class="num">Points</th></tr></thead><tbody>';
+      rows.forEach(function(r, i){
+        var isTieTop = i>0 && rows[i-1].wins!=null && r.wins!=null && rows[i-1].wins===r.wins;
+        html += '<tr class="' + (i===0 && r.wins!=null?'lead ':'') + (isTieTop?'tiegroup-top':'') + '">';
+        html += '<td class="rank">' + (i+1) + '</td><td class="name">' + r.name + '</td><td><div class="teams">';
+        r.teams.forEach(function(abbr){
+          var t = TEAM_META[abbr];
+          var rec = state.standings[abbr];
+          var recTxt = rec ? (rec.w + '-' + rec.l + (rec.t? '-' + rec.t : '')) : '—';
+          var contribTxt = rec ? winScore(rec) : null;
+          html += '<span class="badge"><span class="swatch" style="background:' + t.color + '"></span>' + abbr + ' <span class="rec">' + recTxt + '</span>' + (contribTxt!=null ? ' <span class="contrib">' + contribTxt + '</span>' : '') + '</span>';
+        });
+        html += '</div></td><td class="num wins">' + (r.wins!=null ? r.wins : '—') + '</td><td class="num pf">' + (r.pf!=null ? r.pf : '—') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      if(state.errors && state.errors.length){
+        html += '<div class="footnote">Couldn\'t reach ESPN for: ' + state.errors.join(', ') + '. Try refreshing again shortly.</div>';
+      }
+    }
+
+    html += '<details class="rules"><summary>Pool rules</summary><ol>';
+    html += '<li>Each player\'s score is the combined regular-season win total of their 3 drafted teams.</li>';
+    html += '<li>A tie counts as half a win.</li>';
+    html += '<li>$25 entry · $200 to 1st, plus a scaled 2nd-place payout for the 12-player field.</li>';
+    html += '<li>Ties in total wins are broken by combined points scored across the 3 teams.</li>';
+    html += '<li>Rounds 1–2 were a snake draft; round 3 was open — any remaining team could be taken by anyone, so some teams (like Carolina and Atlanta) are owned by multiple players.</li>';
+    html += '</ol></details>';
+    html += '<div class="footnote">Records pulled live from ESPN on each page load. Just refresh the page for the latest.</div>';
+    html += '</div>';
+
+    root.innerHTML = html;
+    var rb = document.getElementById('refreshBtn');
+    if(rb) rb.onclick = load;
+    var rbe = document.getElementById('refreshBtnEmpty');
+    if(rbe) rbe.onclick = load;
+  }
+
+  function showToast(msg){
+    var el = document.createElement('div');
+    el.className = 'toast'; el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 4000);
+  }
+
+  async function load(){
+    state.loading = true;
+    render();
+    try{
+      var res = await fetch('/api/standings');
+      if(!res.ok) throw new Error('Server returned ' + res.status);
+      var data = await res.json();
+      state.standings = data.standings || {};
+      state.updatedAt = data.updatedAt || new Date().toISOString();
+      state.errors = data.errors || [];
+      state.loading = false;
+      render();
+    }catch(err){
+      console.error(err);
+      state.loading = false;
+      render();
+      showToast('Could not load standings (' + err.message + ').');
+    }
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
