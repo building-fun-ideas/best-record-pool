@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Best Record Pool</title>
+<script>
+  // Set the theme class before first paint, so there's no flash of the
+  // wrong theme. Explicit choice (saved) wins; otherwise follow the OS/browser.
+  (function(){
+    try{
+      var saved = localStorage.getItem('brp-theme');
+      var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      if(theme === 'light') document.documentElement.classList.add('theme-light');
+    }catch(e){}
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,6 +32,15 @@
     --live:#FF5D5D;
     --win:#3DDC84;
     --loss:#FF6B6B;
+  }
+  html.theme-light{
+    --bg:#F4F5F8;
+    --panel:#FFFFFF;
+    --panel-2:#F0F2F6;
+    --border:#E1E5EC;
+    --text:#12151C;
+    --text-dim:#5B6472;
+    --text-faint:#8890A0;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -48,6 +68,13 @@
   .live-dot{width:6px;height:6px;border-radius:50%;background:var(--live);animation:pulse 1.6s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,93,93,0.5);}50%{opacity:0.55;box-shadow:0 0 0 4px rgba(255,93,93,0);}}
   @media (prefers-reduced-motion: reduce){.live-dot{animation:none;}}
+
+  .theme-toggle{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);
+    cursor:pointer;font-size:13px;color:var(--text-dim);padding:0;
+  }
+  .theme-toggle:hover{border-color:var(--accent);}
 
   .status{text-align:right;}
   .status .updated{font-size:11px;color:var(--text-faint);margin-bottom:6px;}
@@ -352,6 +379,28 @@
 
   function initials(name){ return name.slice(0,2).toUpperCase(); }
 
+  // ---- theme (light/dark) ----
+  function getTheme(){
+    return document.documentElement.classList.contains('theme-light') ? 'light' : 'dark';
+  }
+  function setTheme(theme, persist){
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    if(persist){
+      try{ localStorage.setItem('brp-theme', theme); }catch(e){}
+    }
+  }
+  try{
+    var lightQuery = window.matchMedia('(prefers-color-scheme: light)');
+    lightQuery.addEventListener('change', function(e){
+      try{
+        if(!localStorage.getItem('brp-theme')){
+          setTheme(e.matches ? 'light' : 'dark', false);
+          render();
+        }
+      }catch(err){}
+    });
+  }catch(e){}
+
   function render(){
     var root = document.getElementById('root');
     var rows = computeRanking();
@@ -363,7 +412,8 @@
     html += '<div class="wrap">';
 
     html += '<div class="topbar"><div class="brand"><h1>Best Record Pool</h1>';
-    html += '<span class="live-pill"><span class="live-dot"></span>LIVE</span></div>';
+    html += '<span class="live-pill"><span class="live-dot"></span>LIVE</span>';
+    html += '<button class="theme-toggle" id="themeToggle" title="Switch theme">' + (getTheme()==='light' ? '🌙' : '☀️') + '</button></div>';
     html += '<div class="status"><div class="updated">' + (state.loading ? 'Loading…' : 'Updated ' + fmtTime(state.updatedAt)) + '</div>';
     html += '<div style="font-size:10px;color:var(--text-faint);margin-bottom:6px;">Auto-refreshes every 2 min</div>';
     html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
@@ -462,6 +512,8 @@
     if(rb) rb.onclick = function(){ load(); };
     var rbe = document.getElementById('refreshBtnEmpty');
     if(rbe) rbe.onclick = function(){ load(); };
+    var tt = document.getElementById('themeToggle');
+    if(tt) tt.onclick = function(){ setTheme(getTheme()==='light' ? 'dark' : 'light', true); render(); };
   }
 
   function showToast(msg){
