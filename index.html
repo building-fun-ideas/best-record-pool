@@ -19,7 +19,8 @@
     --accent:#FFB238;
     --accent-soft:rgba(255,178,56,0.12);
     --live:#FF5D5D;
-    --neg:#3A4256;
+    --win:#3DDC84;
+    --loss:#FF6B6B;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -30,10 +31,11 @@
     min-height:100vh;
     padding:32px 18px 56px;
     -webkit-font-smoothing:antialiased;
+    transition:background 0.4s ease;
   }
   .wrap{max-width:760px;margin:0 auto;}
 
-  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;gap:12px;flex-wrap:wrap;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:12px;flex-wrap:wrap;}
   .brand{display:flex;align-items:center;gap:10px;}
   .brand h1{
     font-family:'Sora',sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.2px;
@@ -50,12 +52,14 @@
   .status{text-align:right;}
   .status .updated{font-size:11px;color:var(--text-faint);margin-bottom:6px;}
   button.refresh{
-    background:var(--accent);color:#1A1305;border:none;font-weight:700;
+    background:var(--accent);color:#14100A;border:none;font-weight:700;
     font-size:13px;padding:9px 16px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;
-    transition:filter 0.15s ease;
+    transition:filter 0.15s ease, background 0.4s ease;
   }
   button.refresh:disabled{opacity:0.5;cursor:default;}
   button.refresh:hover:not(:disabled){filter:brightness(1.08);}
+
+  .themenote{font-size:10.5px;color:var(--text-faint);margin-bottom:22px;}
 
   .hero{
     background:linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%);
@@ -66,17 +70,18 @@
   .hero::before{
     content:'';position:absolute;top:0;left:0;bottom:0;width:4px;
     background:linear-gradient(180deg, var(--accent), transparent);
+    transition:background 0.4s ease;
   }
   .hero-left{display:flex;align-items:center;gap:16px;}
   .avatar{
-    width:52px;height:52px;border-radius:50%;background:var(--accent-soft);border:1px solid rgba(255,178,56,0.35);
+    width:52px;height:52px;border-radius:50%;background:var(--accent-soft);border:1px solid var(--accent);
     display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;
-    font-size:18px;color:var(--accent);flex:0 0 52px;
+    font-size:18px;color:var(--accent);flex:0 0 52px;transition:background 0.4s ease, border 0.4s ease, color 0.4s ease;
   }
   .hero .label{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-faint);font-weight:700;margin-bottom:4px;}
   .hero .leader-name{font-family:'Sora',sans-serif;font-weight:700;font-size:24px;color:var(--text);}
   .hero .margin{font-size:12.5px;color:var(--text-dim);margin-top:3px;}
-  .hero .num{font-family:'Sora',sans-serif;font-weight:800;font-size:44px;color:var(--accent);line-height:1;text-align:right;}
+  .hero .num{font-family:'Sora',sans-serif;font-weight:800;font-size:44px;color:var(--accent);line-height:1;text-align:right;transition:color 0.4s ease;}
   .hero .num small{display:block;font-size:11px;font-weight:600;color:var(--text-faint);margin-top:4px;text-transform:uppercase;letter-spacing:0.4px;}
 
   .listhead{
@@ -98,7 +103,7 @@
     font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;color:var(--text-dim);background:var(--panel-2);
     border:1px solid var(--border);
   }
-  .row.lead .rankbadge{background:var(--accent);color:#1A1305;border-color:var(--accent);}
+  .row.lead .rankbadge{background:var(--accent);color:#14100A;border-color:var(--accent);transition:background 0.4s ease,border 0.4s ease;}
   .playername{font-weight:700;font-size:14.5px;color:var(--text);}
   .teams{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
   .chip{
@@ -108,13 +113,44 @@
   }
   .swatch{width:8px;height:8px;border-radius:50%;flex:0 0 8px;}
   .chip .rec{color:var(--text-faint);font-weight:500;}
-  .chip .contrib{color:var(--accent);font-weight:700;}
+  .chip .contrib{color:var(--accent);font-weight:700;transition:color 0.4s ease;}
   .num-cell{text-align:right;}
   .wins{font-weight:800;font-size:16px;font-family:'Sora',sans-serif;color:var(--text);}
   .pf{font-size:11px;color:var(--text-faint);margin-top:2px;}
 
   .empty{text-align:center;padding:48px 20px;border:1px dashed var(--border);border-radius:14px;color:var(--text-dim);}
   .empty button.refresh{margin-top:16px;}
+
+  .section-title{
+    font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin:34px 0 12px;color:var(--text);
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-sub{font-size:11.5px;color:var(--text-faint);margin:-8px 0 14px;font-weight:500;}
+
+  .recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:520px){.recap-grid{grid-template-columns:1fr;}}
+  .recap-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;
+  }
+  .recap-card.perfect{border-color:rgba(61,220,132,0.35);}
+  .recap-card.winless{border-color:rgba(255,107,107,0.3);}
+  .recap-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  .recap-card.perfect .recap-label{color:var(--win);}
+  .recap-card.winless .recap-label{color:var(--loss);}
+  .recap-names{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;color:var(--text);}
+  .recap-empty{font-size:12.5px;color:var(--text-faint);}
+
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:12px;}
+  table.weekly{width:100%;border-collapse:collapse;font-size:12px;min-width:640px;}
+  table.weekly th, table.weekly td{padding:9px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--border);}
+  table.weekly th:first-child, table.weekly td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);}
+  table.weekly thead th{
+    font-size:10.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.3px;
+    background:var(--panel-2);
+  }
+  table.weekly tbody tr:last-child td{border-bottom:none;}
+  table.weekly td{color:var(--text-dim);font-weight:600;}
+  table.weekly td.wk{color:var(--text);font-weight:700;background:var(--panel);}
 
   details.rules{margin-top:34px;border-top:1px solid var(--border);padding-top:16px;font-size:13px;color:var(--text-dim);}
   details.rules summary{cursor:pointer;color:var(--text);font-weight:700;font-size:13px;list-style:none;}
@@ -189,7 +225,7 @@
     {name:'Dana',     teams:['LAC','HOU','CAR']}
   ];
 
-  var state = { standings: {}, updatedAt: null, loading: true, errors: [] };
+  var state = { standings: {}, teamGames: {}, updatedAt: null, loading: true, errors: [] };
 
   function fmtTime(iso){
     if(!iso) return 'Never';
@@ -218,14 +254,106 @@
     return rows;
   }
 
-  function initials(name){
-    return name.slice(0,2).toUpperCase();
+  function computeWeekly(){
+    var weekSet = {};
+    Object.keys(state.teamGames).forEach(function(abbr){
+      state.teamGames[abbr].forEach(function(g){ weekSet[g.week] = true; });
+    });
+    var weeks = Object.keys(weekSet).map(Number).sort(function(a,b){ return a-b; });
+    var perWeek = {};
+    weeks.forEach(function(w){
+      perWeek[w] = DRAFT.map(function(entry){
+        var pts = 0, wins = 0, played = 0;
+        entry.teams.forEach(function(abbr){
+          var games = state.teamGames[abbr] || [];
+          var g = games.filter(function(x){ return x.week === w; })[0];
+          if(g){ pts += g.pf; played++; if(g.result === 'W') wins++; }
+        });
+        return { name: entry.name, pts: pts, wins: wins, played: played };
+      });
+    });
+    return { weeks: weeks, perWeek: perWeek };
   }
+
+  // ---- color helpers for the leader-themed accent ----
+  function hexToRgb(hex){
+    hex = hex.replace('#','');
+    if(hex.length===3) hex = hex.split('').map(function(c){ return c+c; }).join('');
+    var num = parseInt(hex,16);
+    return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+  }
+  function rgbToHex(r,g,b){
+    return '#' + [r,g,b].map(function(v){
+      v = Math.max(0, Math.min(255, Math.round(v)));
+      var h = v.toString(16);
+      return h.length===1 ? '0'+h : h;
+    }).join('');
+  }
+  function rgbToHsl(r,g,b){
+    r/=255; g/=255; b/=255;
+    var max=Math.max(r,g,b), min=Math.min(r,g,b), h,s,l=(max+min)/2;
+    if(max===min){ h=s=0; }
+    else{
+      var d=max-min;
+      s = l>0.5 ? d/(2-max-min) : d/(max+min);
+      if(max===r) h=(g-b)/d + (g<b?6:0);
+      else if(max===g) h=(b-r)/d + 2;
+      else h=(r-g)/d + 4;
+      h/=6;
+    }
+    return { h:h, s:s, l:l };
+  }
+  function hslToRgb(h,s,l){
+    var r,g,b;
+    if(s===0){ r=g=b=l; }
+    else{
+      function hue2rgb(p,q,t){
+        if(t<0)t+=1; if(t>1)t-=1;
+        if(t<1/6) return p+(q-p)*6*t;
+        if(t<1/2) return q;
+        if(t<2/3) return p+(q-p)*(2/3-t)*6;
+        return p;
+      }
+      var q = l<0.5 ? l*(1+s) : l+s-l*s;
+      var p = 2*l-q;
+      r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+    }
+    return { r:r*255, g:g*255, b:b*255 };
+  }
+  function blendTeamColors(hexArr){
+    var sum = {r:0,g:0,b:0};
+    hexArr.forEach(function(hx){ var c=hexToRgb(hx); sum.r+=c.r; sum.g+=c.g; sum.b+=c.b; });
+    var n = hexArr.length;
+    var avg = { r: sum.r/n, g: sum.g/n, b: sum.b/n };
+    var hsl = rgbToHsl(avg.r, avg.g, avg.b);
+    var s = Math.max(hsl.s, 0.5);
+    var l = Math.min(Math.max(hsl.l, 0.48), 0.62);
+    var rgb = hslToRgb(hsl.h, s, l);
+    return rgbToHex(rgb.r, rgb.g, rgb.b);
+  }
+  function applyLeaderTheme(leader){
+    var root = document.documentElement;
+    if(!leader){
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--accent-soft');
+      return;
+    }
+    var colors = leader.teams.map(function(abbr){ return TEAM_META[abbr].color; });
+    var accent = blendTeamColors(colors);
+    var c = hexToRgb(accent);
+    root.style.setProperty('--accent', accent);
+    root.style.setProperty('--accent-soft', 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0.14)');
+  }
+
+  function initials(name){ return name.slice(0,2).toUpperCase(); }
 
   function render(){
     var root = document.getElementById('root');
     var rows = computeRanking();
     var haveAny = Object.keys(state.standings).length > 0;
+    var leader = haveAny ? rows[0] : null;
+    applyLeaderTheme(leader && leader.wins != null ? leader : null);
+
     var html = '';
     html += '<div class="wrap">';
 
@@ -234,6 +362,7 @@
     html += '<div class="status"><div class="updated">' + (state.loading ? 'Loading…' : 'Updated ' + fmtTime(state.updatedAt)) + '</div>';
     html += '<div style="font-size:10px;color:var(--text-faint);margin-bottom:6px;">Auto-refreshes every 2 min</div>';
     html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
+    html += '<div class="themenote">Page theme follows the current leader\'s team colors.</div>';
 
     if(!haveAny && !state.loading){
       html += '<div class="empty">Could not load standings.';
@@ -242,7 +371,7 @@
       }
       html += '<br><button class="refresh" id="refreshBtnEmpty">Try again</button></div>';
     } else if(haveAny){
-      var leader = rows[0], second = rows[1];
+      var second = rows[1];
       var margin = (leader && second && leader.wins!=null && second.wins!=null) ? (leader.wins - second.wins) : null;
       html += '<div class="hero"><div class="hero-left"><div class="avatar">' + (leader ? initials(leader.name) : '—') + '</div><div>';
       html += '<div class="label">Currently leading</div>';
@@ -273,6 +402,44 @@
       if(state.errors && state.errors.length){
         html += '<div class="footnote">Couldn\'t reach ESPN for: ' + state.errors.join(', ') + '. Try refreshing again shortly.</div>';
       }
+
+      // ---- Weekly recap: perfect / winless weeks ----
+      var weekly = computeWeekly();
+      var latestWeek = weekly.weeks.length ? weekly.weeks[weekly.weeks.length - 1] : null;
+      html += '<div class="section-title">Week ' + (latestWeek!=null ? latestWeek : '—') + ' recap</div>';
+      if(latestWeek == null){
+        html += '<div class="section-sub">No games finished yet this week — check back once Sunday\'s games wrap up.</div>';
+      } else {
+        var latestRows = weekly.perWeek[latestWeek];
+        var perfect = latestRows.filter(function(r){ return r.played===3 && r.wins===3; });
+        var winless = latestRows.filter(function(r){ return r.played===3 && r.wins===0; });
+        html += '<div class="recap-grid">';
+        html += '<div class="recap-card perfect"><div class="recap-label">Perfect week — all 3 won</div>';
+        html += perfect.length ? '<div class="recap-names">' + perfect.map(function(r){return r.name;}).join(', ') + '</div>' : '<div class="recap-empty">Nobody swept this week.</div>';
+        html += '</div>';
+        html += '<div class="recap-card winless"><div class="recap-label">Winless week — all 3 lost</div>';
+        html += winless.length ? '<div class="recap-names">' + winless.map(function(r){return r.name;}).join(', ') + '</div>' : '<div class="recap-empty">Nobody got shut out this week.</div>';
+        html += '</div></div>';
+      }
+
+      // ---- Points by week table ----
+      html += '<div class="section-title">Points by week</div>';
+      if(!weekly.weeks.length){
+        html += '<div class="section-sub">Will fill in once games start finishing.</div>';
+      } else {
+        html += '<div class="tablewrap"><table class="weekly"><thead><tr><th>Week</th>';
+        DRAFT.forEach(function(entry){ html += '<th>' + entry.name + '</th>'; });
+        html += '</tr></thead><tbody>';
+        weekly.weeks.forEach(function(w){
+          html += '<tr><td class="wk">Wk ' + w + '</td>';
+          weekly.perWeek[w].forEach(function(r){
+            html += '<td>' + (r.played>0 ? r.pts : '—') + '</td>';
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        html += '<div class="footnote">A team on bye that week counts as 0 points toward that week\'s total.</div>';
+      }
     }
 
     html += '<details class="rules"><summary>Pool rules</summary><ol>';
@@ -299,44 +466,69 @@
     setTimeout(function(){ el.remove(); }, 4000);
   }
 
-  async function fetchTeam(abbr, id){
-    var url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/' + id;
+  function scoreNum(s){
+    if(s==null) return null;
+    if(typeof s === 'object') return typeof s.value === 'number' ? s.value : parseFloat(s.value);
+    var n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+
+  async function fetchTeamSchedule(abbr, id){
+    var url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/' + id + '/schedule?seasontype=2';
     var res = await fetch(url);
     if(!res.ok) throw new Error('HTTP ' + res.status + ' for ' + abbr);
     var data = await res.json();
-    var items = (data.team && data.team.record && data.team.record.items) || [];
-    var total = items.filter(function(i){ return i.type === 'total'; })[0];
-    if(!total) throw new Error('No record data for ' + abbr);
-    function stat(name){
-      var found = total.stats.filter(function(s){ return s.name === name; })[0];
-      return found ? found.value : 0;
-    }
-    return { w: stat('wins'), l: stat('losses'), t: stat('ties'), pf: stat('pointsFor') };
+    var events = data.events || [];
+    var games = [];
+    events.forEach(function(ev){
+      var comp = ev.competitions && ev.competitions[0];
+      if(!comp) return;
+      var completed = comp.status && comp.status.type && comp.status.type.completed;
+      if(!completed) return;
+      var week = ev.week && ev.week.number;
+      if(!week) return;
+      var competitors = comp.competitors || [];
+      var me = competitors.filter(function(c){
+        return String(c.id) === String(id) || (c.team && String(c.team.id) === String(id));
+      })[0];
+      var opp = competitors.filter(function(c){ return c !== me; })[0];
+      if(!me || !opp) return;
+      var pf = scoreNum(me.score);
+      var pa = scoreNum(opp.score);
+      if(pf==null || pa==null) return;
+      var result = pf>pa ? 'W' : (pf<pa ? 'L' : 'T');
+      games.push({ week: week, pf: pf, pa: pa, result: result });
+    });
+    return games;
   }
 
   async function load(silent){
-    if(!silent){
-      state.loading = true;
-      render();
-    }
+    if(!silent){ state.loading = true; render(); }
     var abbrs = Object.keys(TEAM_IDS);
     var results = await Promise.allSettled(abbrs.map(function(abbr){
-      return fetchTeam(abbr, TEAM_IDS[abbr]);
+      return fetchTeamSchedule(abbr, TEAM_IDS[abbr]);
     }));
     var standings = {};
+    var teamGames = {};
     var errors = [];
     results.forEach(function(result, i){
       var abbr = abbrs[i];
       if(result.status === 'fulfilled'){
-        standings[abbr] = result.value;
+        var games = result.value;
+        teamGames[abbr] = games;
+        var rec = { w:0, l:0, t:0, pf:0 };
+        games.forEach(function(g){
+          if(g.result==='W') rec.w++; else if(g.result==='L') rec.l++; else rec.t++;
+          rec.pf += g.pf;
+        });
+        standings[abbr] = rec;
       } else {
         errors.push(abbr + ': ' + result.reason.message);
       }
     });
-    // On a silent background refresh, don't wipe out good data with an
-    // empty result if this particular fetch pass happened to fail.
     if(Object.keys(standings).length > 0 || !silent){
       state.standings = standings;
+      state.teamGames = teamGames;
       state.errors = errors;
       state.updatedAt = new Date().toISOString();
     }
@@ -349,9 +541,6 @@
 
   load();
 
-  // Auto-refresh every 2 minutes while the tab is open and visible.
-  // Paused when the tab is hidden so it doesn't fetch pointlessly in the
-  // background; catches up right away when you switch back to it.
   var AUTO_REFRESH_MS = 2 * 60 * 1000;
   var lastLoadTime = Date.now();
   setInterval(function(){
