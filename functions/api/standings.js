@@ -12,12 +12,22 @@ const TEAM_IDS = {
 
 async function fetchTeamRecord(abbr, id) {
   const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${id}`;
-  const res = await fetch(url, { cf: { cacheTtl: 60, cacheEverything: true } });
-  if (!res.ok) throw new Error(`ESPN returned ${res.status} for ${abbr}`);
+  const res = await fetch(url, {
+    cf: { cacheTtl: 60, cacheEverything: true },
+    headers: {
+      // ESPN's endpoints frequently reject requests with no browser-like
+      // headers (common from server/edge environments). Send some so we
+      // look like an ordinary browser tab.
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'application/json,text/plain,*/*',
+      'Referer': 'https://www.espn.com/'
+    }
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${abbr}`);
   const data = await res.json();
   const items = data?.team?.record?.items || [];
   const total = items.find(i => i.type === 'total');
-  if (!total) throw new Error(`No total record for ${abbr}`);
+  if (!total) throw new Error(`No total record field for ${abbr}`);
   const stat = name => total.stats.find(s => s.name === name)?.value ?? 0;
   return {
     w: stat('wins'),
@@ -40,7 +50,7 @@ export async function onRequestGet(context) {
     if (result.status === 'fulfilled') {
       standings[abbr] = result.value;
     } else {
-      errors.push(abbr);
+      errors.push(abbr + ': ' + result.reason.message);
     }
   });
 
