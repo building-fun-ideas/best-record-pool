@@ -114,6 +114,14 @@
     HOU:{full:'Houston Texans', color:'#03202F'}
   };
 
+  var TEAM_IDS = {
+    BAL:33, NYG:19, CAR:29, LAR:14, NO:18, TEN:10,
+    BUF:2,  WSH:28, IND:11, SEA:26, DET:8,  PIT:23,
+    ATL:1,  PHI:21, MIN:16, DEN:7,  TB:27,  NE:17,
+    JAX:30, SF:25,  GB:9,   CIN:4,  CHI:3,  KC:12,
+    DAL:6,  LAC:24, HOU:34
+  };
+
   var DRAFT = [
     {name:'Jon',      teams:['BAL','NYG','CAR']},
     {name:'Nathalie', teams:['LAR','NO','TEN']},
@@ -209,7 +217,7 @@
     html += '<li>Ties in total wins are broken by combined points scored across the 3 teams.</li>';
     html += '<li>Rounds 1–2 were a snake draft; round 3 was open — any remaining team could be taken by anyone, so some teams (like Carolina and Atlanta) are owned by multiple players.</li>';
     html += '</ol></details>';
-    html += '<div class="footnote">Records pulled live from ESPN on each page load. Just refresh the page for the latest.</div>';
+    html += '<div class="footnote">Records pulled live from ESPN, directly in your browser, on each page load. Just refresh the page for the latest.</div>';
     html += '</div>';
 
     root.innerHTML = html;
@@ -226,23 +234,45 @@
     setTimeout(function(){ el.remove(); }, 4000);
   }
 
+  async function fetchTeam(abbr, id){
+    var url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/' + id;
+    var res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' for ' + abbr);
+    var data = await res.json();
+    var items = (data.team && data.team.record && data.team.record.items) || [];
+    var total = items.filter(function(i){ return i.type === 'total'; })[0];
+    if(!total) throw new Error('No record data for ' + abbr);
+    function stat(name){
+      var found = total.stats.filter(function(s){ return s.name === name; })[0];
+      return found ? found.value : 0;
+    }
+    return { w: stat('wins'), l: stat('losses'), t: stat('ties'), pf: stat('pointsFor') };
+  }
+
   async function load(){
     state.loading = true;
     render();
-    try{
-      var res = await fetch('/api/standings');
-      if(!res.ok) throw new Error('Server returned ' + res.status);
-      var data = await res.json();
-      state.standings = data.standings || {};
-      state.updatedAt = data.updatedAt || new Date().toISOString();
-      state.errors = data.errors || [];
-      state.loading = false;
-      render();
-    }catch(err){
-      console.error(err);
-      state.loading = false;
-      render();
-      showToast('Could not load standings (' + err.message + ').');
+    var abbrs = Object.keys(TEAM_IDS);
+    var results = await Promise.allSettled(abbrs.map(function(abbr){
+      return fetchTeam(abbr, TEAM_IDS[abbr]);
+    }));
+    var standings = {};
+    var errors = [];
+    results.forEach(function(result, i){
+      var abbr = abbrs[i];
+      if(result.status === 'fulfilled'){
+        standings[abbr] = result.value;
+      } else {
+        errors.push(abbr + ': ' + result.reason.message);
+      }
+    });
+    state.standings = standings;
+    state.errors = errors;
+    state.updatedAt = new Date().toISOString();
+    state.loading = false;
+    render();
+    if(errors.length && Object.keys(standings).length === 0){
+      showToast('Could not reach ESPN from your browser (' + errors[0] + ').');
     }
   }
 
