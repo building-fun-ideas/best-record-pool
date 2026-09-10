@@ -169,7 +169,11 @@
     html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
 
     if(!haveAny && !state.loading){
-      html += '<div class="empty">Could not load standings.<br><button class="refresh" id="refreshBtnEmpty">Try again</button></div>';
+      html += '<div class="empty">Could not load standings.';
+      if(state.errors && state.errors.length){
+        html += '<div style="margin-top:8px;font-size:11px;opacity:0.8;">' + state.errors[0] + '</div>';
+      }
+      html += '<br><button class="refresh" id="refreshBtnEmpty">Try again</button></div>';
     } else if(haveAny){
       var leader = rows[0], second = rows[1];
       var margin = (leader && second && leader.wins!=null && second.wins!=null) ? (leader.wins - second.wins) : null;
