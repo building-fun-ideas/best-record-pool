@@ -232,6 +232,7 @@
     html += '<div class="topbar"><div class="brand"><h1>Best Record Pool</h1>';
     html += '<span class="live-pill"><span class="live-dot"></span>LIVE</span></div>';
     html += '<div class="status"><div class="updated">' + (state.loading ? 'Loading…' : 'Updated ' + fmtTime(state.updatedAt)) + '</div>';
+    html += '<div style="font-size:10px;color:var(--text-faint);margin-bottom:6px;">Auto-refreshes every 2 min</div>';
     html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
 
     if(!haveAny && !state.loading){
@@ -286,9 +287,9 @@
 
     root.innerHTML = html;
     var rb = document.getElementById('refreshBtn');
-    if(rb) rb.onclick = load;
+    if(rb) rb.onclick = function(){ load(); };
     var rbe = document.getElementById('refreshBtnEmpty');
-    if(rbe) rbe.onclick = load;
+    if(rbe) rbe.onclick = function(){ load(); };
   }
 
   function showToast(msg){
@@ -313,9 +314,11 @@
     return { w: stat('wins'), l: stat('losses'), t: stat('ties'), pf: stat('pointsFor') };
   }
 
-  async function load(){
-    state.loading = true;
-    render();
+  async function load(silent){
+    if(!silent){
+      state.loading = true;
+      render();
+    }
     var abbrs = Object.keys(TEAM_IDS);
     var results = await Promise.allSettled(abbrs.map(function(abbr){
       return fetchTeam(abbr, TEAM_IDS[abbr]);
@@ -330,17 +333,40 @@
         errors.push(abbr + ': ' + result.reason.message);
       }
     });
-    state.standings = standings;
-    state.errors = errors;
-    state.updatedAt = new Date().toISOString();
+    // On a silent background refresh, don't wipe out good data with an
+    // empty result if this particular fetch pass happened to fail.
+    if(Object.keys(standings).length > 0 || !silent){
+      state.standings = standings;
+      state.errors = errors;
+      state.updatedAt = new Date().toISOString();
+    }
     state.loading = false;
     render();
-    if(errors.length && Object.keys(standings).length === 0){
+    if(errors.length && Object.keys(standings).length === 0 && !silent){
       showToast('Could not reach ESPN from your browser (' + errors[0] + ').');
     }
   }
 
   load();
+
+  // Auto-refresh every 2 minutes while the tab is open and visible.
+  // Paused when the tab is hidden so it doesn't fetch pointlessly in the
+  // background; catches up right away when you switch back to it.
+  var AUTO_REFRESH_MS = 2 * 60 * 1000;
+  var lastLoadTime = Date.now();
+  setInterval(function(){
+    if(document.visibilityState === 'visible'){
+      lastLoadTime = Date.now();
+      load(true);
+    }
+  }, AUTO_REFRESH_MS);
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible' && Date.now() - lastLoadTime > AUTO_REFRESH_MS){
+      lastLoadTime = Date.now();
+      load(true);
+    }
+  });
 })();
 </script>
 </body>
