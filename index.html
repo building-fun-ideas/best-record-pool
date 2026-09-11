@@ -112,18 +112,19 @@
   .hero .num small{display:block;font-size:11px;font-weight:600;color:var(--text-faint);margin-top:4px;text-transform:uppercase;letter-spacing:0.4px;}
 
   .listhead{
-    display:grid;grid-template-columns:32px 1fr 130px;gap:10px;padding:0 14px 8px;
+    display:grid;grid-template-columns:32px 1fr 176px;gap:10px;padding:0 14px 8px;
     font-size:10.5px;font-weight:700;letter-spacing:0.5px;color:var(--text-faint);text-transform:uppercase;
   }
-  .listhead .numrow-head{display:flex;justify-content:flex-end;gap:22px;}
-  .listhead .numrow-head span{width:56px;text-align:right;}
+  .listhead .numrow-head{display:flex;justify-content:flex-end;gap:16px;}
+  .stat-wins{width:38px;text-align:right;}
+  .stat-pts{width:34px;text-align:right;}
+  .stat-record{width:64px;text-align:right;}
 
   .row{
-    display:grid;grid-template-columns:32px 1fr 130px;gap:10px;align-items:center;
+    display:grid;grid-template-columns:32px 1fr 176px;gap:10px;align-items:center;
     padding:13px 14px;border-bottom:1px solid var(--border);
   }
-  .numrow{display:flex;justify-content:flex-end;gap:22px;}
-  .numrow .num-cell{width:56px;text-align:right;}
+  .numrow{display:flex;justify-content:flex-end;gap:16px;}
   .row.lead{background:var(--panel);border-radius:10px;border-bottom:1px solid var(--border);}
   .row.tie-top{box-shadow:inset 0 1px 0 0 rgba(255,178,56,0.4);}
   .rankbadge{
@@ -270,7 +271,8 @@
       var hasAll = recs.every(function(r){ return r; });
       var wins = hasAll ? recs.reduce(function(s,r){ return s + winScore(r); },0) : null;
       var pf = hasAll ? recs.reduce(function(s,r){ return s + (r.pf||0); },0) : null;
-      return { name: entry.name, teams: entry.teams, wins: wins, pf: pf };
+      var record = hasAll ? recs.reduce(function(acc,r){ acc.w+=r.w; acc.l+=r.l; acc.t+=r.t; return acc; }, {w:0,l:0,t:0}) : null;
+      return { name: entry.name, teams: entry.teams, wins: wins, pf: pf, record: record };
     });
     rows.sort(function(a,b){
       if(a.wins==null && b.wins==null) return 0;
@@ -280,6 +282,11 @@
       return (b.pf||0) - (a.pf||0);
     });
     return rows;
+  }
+
+  function fmtRecord(rec){
+    if(!rec) return '—';
+    return rec.w + '-' + rec.l + (rec.t ? '-' + rec.t : '');
   }
 
   function computeWeekly(){
@@ -370,8 +377,16 @@
       root.style.removeProperty('--accent-soft');
       return;
     }
-    var colors = leader.teams.map(function(abbr){ return TEAM_META[abbr].color; });
-    var accent = blendTeamColors(colors);
+    // Use the color of whichever of the leader's 3 teams is contributing the
+    // most wins, rather than blending all 3 (blending mismatched hues like
+    // red + green + blue tends to produce a muddy, unrecognizable color).
+    var bestAbbr = leader.teams[0], bestScore = -1;
+    leader.teams.forEach(function(abbr){
+      var rec = state.standings[abbr];
+      var score = rec ? winScore(rec) : 0;
+      if(score > bestScore){ bestScore = score; bestAbbr = abbr; }
+    });
+    var accent = blendTeamColors([TEAM_META[bestAbbr].color]);
     var c = hexToRgb(accent);
     root.style.setProperty('--accent', accent);
     root.style.setProperty('--accent-soft', 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',0.14)');
@@ -417,7 +432,7 @@
     html += '<div class="status"><div class="updated">' + (state.loading ? 'Loading…' : 'Updated ' + fmtTime(state.updatedAt)) + '</div>';
     html += '<div style="font-size:10px;color:var(--text-faint);margin-bottom:6px;">Auto-refreshes every 2 min</div>';
     html += '<button class="refresh" id="refreshBtn" ' + (state.loading?'disabled':'') + '>' + (state.loading?'Fetching…':'Refresh') + '</button></div></div>';
-    html += '<div class="themenote">Page theme follows the current leader\'s team colors.</div>';
+    html += '<div class="themenote">Page theme follows the current leader\'s top-performing team.</div>';
 
     if(!haveAny && !state.loading){
       html += '<div class="empty">Could not load standings.';
@@ -434,7 +449,7 @@
       html += '<div class="margin">' + (margin!=null ? (margin===0 ? 'Tied with ' + second.name : 'Leads ' + second.name + ' by ' + margin) : '') + '</div></div></div>';
       html += '<div class="num">' + (leader && leader.wins!=null ? leader.wins : '—') + '<small>Combined wins</small></div></div>';
 
-      html += '<div class="listhead"><div>#</div><div>Player &amp; teams</div><div class="numrow-head"><span>Wins</span><span>Pts</span></div></div>';
+      html += '<div class="listhead"><div>#</div><div>Player &amp; teams</div><div class="numrow-head"><span class="stat-wins">Wins</span><span class="stat-pts">Pts</span><span class="stat-record">Record</span></div></div>';
       rows.forEach(function(r, i){
         var isTieTop = i>0 && rows[i-1].wins!=null && r.wins!=null && rows[i-1].wins===r.wins;
         html += '<div class="row' + (i===0 && r.wins!=null?' lead':'') + (isTieTop?' tie-top':'') + '">';
@@ -449,8 +464,9 @@
         });
         html += '</div></div>';
         html += '<div class="numrow">';
-        html += '<div class="num-cell"><span class="mlabel">W&nbsp;</span><span class="wins">' + (r.wins!=null ? r.wins : '—') + '</span></div>';
-        html += '<div class="num-cell"><span class="mlabel">PTS&nbsp;</span><span class="pf">' + (r.pf!=null ? r.pf : '—') + '</span></div>';
+        html += '<div class="num-cell stat-wins"><span class="mlabel">W&nbsp;</span><span class="wins">' + (r.wins!=null ? r.wins : '—') + '</span></div>';
+        html += '<div class="num-cell stat-pts"><span class="mlabel">PTS&nbsp;</span><span class="pf">' + (r.pf!=null ? r.pf : '—') + '</span></div>';
+        html += '<div class="num-cell stat-record"><span class="mlabel">REC&nbsp;</span><span class="pf">' + fmtRecord(r.record) + '</span></div>';
         html += '</div>';
         html += '</div>';
       });
@@ -477,17 +493,18 @@
         html += '</div></div>';
       }
 
-      // ---- Wins by week table ----
+      // ---- Wins by week table (players as rows, weeks as columns) ----
       html += '<div class="section-title">Wins by week</div>';
       if(!weekly.weeks.length){
         html += '<div class="section-sub">Will fill in once games start finishing.</div>';
       } else {
-        html += '<div class="tablewrap"><table class="weekly"><thead><tr><th>Week</th>';
-        DRAFT.forEach(function(entry){ html += '<th>' + entry.name + '</th>'; });
+        html += '<div class="tablewrap"><table class="weekly"><thead><tr><th>Player</th>';
+        weekly.weeks.forEach(function(w){ html += '<th>Wk ' + w + '</th>'; });
         html += '</tr></thead><tbody>';
-        weekly.weeks.forEach(function(w){
-          html += '<tr><td class="wk">Wk ' + w + '</td>';
-          weekly.perWeek[w].forEach(function(r){
+        DRAFT.forEach(function(entry, idx){
+          html += '<tr><td class="wk">' + entry.name + '</td>';
+          weekly.weeks.forEach(function(w){
+            var r = weekly.perWeek[w][idx];
             html += '<td>' + (r.played>0 ? r.winScore : '—') + '</td>';
           });
           html += '</tr>';
